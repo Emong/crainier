@@ -26,7 +26,7 @@ typedef struct _t_face
 
 typedef struct _t_cell
 {
-	unsigned int type;
+//	unsigned int type;
 	unsigned int p1,p2,p3,p4;
 }t_cell;
 
