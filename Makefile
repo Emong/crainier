@@ -1,4 +1,4 @@
-OBJ = readdata.o rainier.o
+OBJ = readdata.o rainier.o safe_func.o
 
 world: compile
 
