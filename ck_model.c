@@ -164,34 +164,21 @@ void generation_spectrum_parameter()
 	}
 }
 
-// !###############################################################################################################
-// !
-// SUBROUTINE interpolation_coef_CK(T, xh2o, iTCK, ixCK, ciT1, ciT2, cix1, cix2)
-// !
-// !###############################################################################################################
-// !
-// IMPLICIT NONE
-// !
-// INTEGER						:: j
-// DOUBLE PRECISION, INTENT(IN)			:: T, xh2o 
-// INTEGER, INTENT(OUT)		:: iTCK, ixCK
-// DOUBLE PRECISION, INTENT(OUT)			:: ciT1, ciT2, cix1, cix2
-
-void interpolation_coef_CK(double T, double xh2o, int iTCK, int ixCK, double ciT1, double ciT2, double cix1, double cix2)
+void interpolation_coef_CK(double T, double xh2o, int *iTCK, int *ixCK, double *ciT1, double *ciT2, double *cix1, double *cix2)
 {
 	t_ck_model *ckmodel = &get_mesh()->ckmodel;
 	int j;
 	if(T <= ckmodel->temp_pmg[0])
 	{
-		iTCK = 1;
-		ciT1 = 1;
-		ciT2 = 0;
+		*iTCK = 1;
+		*ciT1 = 1;
+		*ciT2 = 0;
 	}
 	else if(T >= ckmodel->temp_pmg[nb_temp_CK-1])
 	{
-		iTCK = nb_temp_CK - 1;
-		ciT2 = 0;
-		ciT2 = 1;
+		*iTCK = nb_temp_CK - 1;
+		*ciT2 = 0;
+		*ciT2 = 1;
 	}
 	else
 	{
@@ -199,15 +186,15 @@ void interpolation_coef_CK(double T, double xh2o, int iTCK, int ixCK, double ciT
 		{
 
 		}
-		iTCK = j;
-		ciT2 = (T-ckmodel->temp_pmg[j] / (ckmodel->temp_pmg[j]-ckmodel->temp_pmg[j-1]) );
-		ciT1 = 1 - ciT2;
+		*iTCK = j;
+		*ciT2 = (T-ckmodel->temp_pmg[j] / (ckmodel->temp_pmg[j]-ckmodel->temp_pmg[j-1]) );
+		*ciT1 = 1 - *ciT2;
 	}
 	for(j=0;xh2o > ckmodel->xh2o_CK[j];j++)
 	{
 
 	}
-	ixCK = j;
-	cix2 = (xh2o-ckmodel->xh2o_CK[j]/(ckmodel->xh2o_CK[j]-ckmodel->xh2o_CK[j]));
-	cix1 = 1 - cix2;
+	*ixCK = j;
+	*cix2 = (xh2o-ckmodel->xh2o_CK[j]/(ckmodel->xh2o_CK[j]-ckmodel->xh2o_CK[j]));
+	*cix1 = 1 - *cix2;
 }
