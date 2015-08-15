@@ -1,4 +1,5 @@
-OBJ = readdata.o rainier.o safe_func.o calfunc.o ck_model.o
+OBJ = readdata.o rainier.o safe_func.o calfunc.o ck_model.o nrand.o cell_loop.o
+LIBS = -lm
 
 world: compile
 
@@ -6,7 +7,7 @@ world: compile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 compile: $(OBJ)
-	$(CC) -o rainier $(OBJ)
+	$(CC) -o rainier $(OBJ) $(LIBS) 
 
 clean:
 	rm -f *.o *.so rainier 
