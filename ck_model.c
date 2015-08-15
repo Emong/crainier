@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <math.h>
 
 void generation_spectrum_parameter();
+void store_kappa_le();
 
 void read_param_CK()
 {
@@ -142,11 +144,11 @@ void generation_spectrum_parameter()
 			{
 				for(k=0;k<nb_gauss_CK;k++)
 				{
-					ckmodel->nb_band++;
 					ckmodel->small_to_big[ckmodel->nb_band] = i;
-					ckmodel->weight_guass[ckmodel->nb_band] = ckmodel->weight_CK[j] + ckmodel->weight_CK[k];
+					ckmodel->weight_guass[ckmodel->nb_band] = ckmodel->weight_CK[j] * ckmodel->weight_CK[k];
 					ckmodel->num_gauss[ckmodel->nb_band] = j;
 					ckmodel->num_gauss2[ckmodel->nb_band] = k;
+					ckmodel->nb_band++;
 				}
 			}
 		}
@@ -154,14 +156,18 @@ void generation_spectrum_parameter()
 		{
 			for(k=0;k<nb_gauss_CK;k++)
 			{
-				ckmodel->nb_band++;
 				ckmodel->small_to_big[ckmodel->nb_band] = i;
 				ckmodel->weight_guass[ckmodel->nb_band] = ckmodel->weight_CK[k];
 				ckmodel->num_gauss[ckmodel->nb_band] = k;
 				ckmodel->num_gauss2[ckmodel->nb_band] = 0;
+				ckmodel->nb_band++;
 			}
 		}
 	}
+	store_kappa_le();
+//#ifdef DEBUG
+	printf("nb_band:%d\n",ckmodel->nb_band );
+//#endif
 }
 
 void interpolation_coef_CK(double T, double xh2o, int *iTCK, int *ixCK, double *ciT1, double *ciT2, double *cix1, double *cix2)
@@ -197,4 +203,108 @@ void interpolation_coef_CK(double T, double xh2o, int *iTCK, int *ixCK, double *
 	*ixCK = j;
 	*cix2 = (xh2o-ckmodel->xh2o_CK[j]/(ckmodel->xh2o_CK[j]-ckmodel->xh2o_CK[j]));
 	*cix1 = 1 - *cix2;
+}
+
+double fQC(double T)
+{
+	double cco2a[4]={-2.154173478, 0.9670123486, -0.8082674825e-3, 0.2806562032e-5};
+	double cco2b[4]={-351.7866975, 2.779333185, -0.3673680835e-2, 0.4090051841e-5};
+	if(T < 405)
+	{
+		return cco2a[0] + cco2a[1]*T + cco2a[2]*pow(T,2) + cco2a[3]*pow(T,3);
+	}
+	else
+	{
+		return cco2b[0] + cco2b[1]*T + cco2b[2]*pow(T,2) + cco2b[3]*pow(T,3);
+	}
+}
+double fQH(double T)
+{
+	double ch2oa[4]={-3.697248813, 0.2601622207, 0.1358654145e-2, -0.6749557714e-6};
+	double ch2ob[4]={-49.01925676, 0.6271879739, 0.3293104256e-3, 0.3447216719e-6};
+	if(T < 405)
+	{
+		return ch2oa[0] + ch2oa[1]*T + ch2oa[2]*pow(T,2) + ch2oa[3]*pow(T,3);
+	}
+	else
+	{
+		return ch2ob[0] + ch2ob[1]*T + ch2ob[2]*pow(T,2) + ch2ob[3]*pow(T,3);
+	}
+}
+
+void store_kappa_le()
+{
+	t_ck_model *ckmodel = &get_mesh()->ckmodel;
+	double  nu;
+	double ciT1x1, ciT2x1, ciT1x2, ciT2x2, ciT1, ciT2, cix1, cix2;
+	double kco2, kh2o;
+	double t,xh2o;
+	int ig, ig2, i_t, i_nu, i_xh2o;
+	int iT, ix;
+//le_store
+	for(i_t=0;i_t<nb_t_le_store;i_t++)
+	{
+		t = t_min_le_store + (i_t) * delta_t_le_store;
+		for(i_nu=0;i_nu<NB_BAND;i_nu++)
+		{
+			nu = ckmodel->nuc[ckmodel->small_to_big[i_nu]];
+			ckmodel->le_store[i_nu][i_t] = ck_c1 * nu * nu * nu / (exp(ck_c2 / t * nu) - 1.0) * 
+			ckmodel->deltanu[ckmodel->small_to_big[i_nu]] * ckmodel->weight_guass[i_nu];
+		}
+	}
+//FQ store
+	for(i_t=0;i_t<nb_fQ_store;i_t++)
+	{
+		t = t_fQ_min_store + (i_t) * delta_fQ_store;
+		ckmodel->fQH_store[i_t] = 1.0 /t / fQH(t);
+		ckmodel->fQC_store[i_t] = 1.0 /t /fQC(t);
+	}
+//kappa store
+	for(i_t=0;i_t<nb_t_kappa_store;i_t++)
+	{
+		t = t_min_kappa_store + (i_t-1) * delta_t_kappa_store;
+		for(i_xh2o = 0;i_xh2o < nb_xh2o_kappa_store+1;i_xh2o++)
+		{
+			xh2o = (i_xh2o) * delta_xh2o_kappa_store;
+			interpolation_coef_CK(t, xh2o, &iT, &ix, &ciT1, &ciT2, &cix1, &cix2);
+			ciT1x1 = ciT1*cix1;
+	 		ciT2x1 = ciT2*cix1;
+	 		ciT1x2 = ciT1*cix2;
+	 		ciT2x2 = ciT2*cix2;
+	 		for(i_nu = 0;i_nu<NB_BAND;i_nu++)
+	 		{
+	 			if(ckmodel->h2o_to_co2[i_nu] > 0)
+	 			{
+	 				ig = ckmodel->num_gauss[i_nu];
+	 				ig2 = ckmodel->num_gauss2[i_nu];
+	 				kh2o = (  ciT1x1 * ckmodel->kstarh[iT][ix][ckmodel->small_to_big[i_nu]][ig]  
+						+ ciT2x1 * ckmodel->kstarh[iT+1][ix][ckmodel->small_to_big[i_nu]][ig]  
+						+ ciT1x2 * ckmodel->kstarh[iT][ix+1][ckmodel->small_to_big[i_nu]][ig]  
+						+ ciT2x2 * ckmodel->kstarh[iT+1][ix+1][ckmodel->small_to_big[i_nu]][ig]);
+	 				kco2 = (  ciT1 * ckmodel->kstarc[iT][ckmodel->h2o_to_co2[ckmodel->small_to_big[i_nu]]][ig2]
+						+ ciT2 * ckmodel->kstarc[iT+1][ckmodel->h2o_to_co2[ckmodel->small_to_big[i_nu]]][ig2]);
+	 				ckmodel->kappa_h2o_store[i_nu][i_t][i_xh2o] = kh2o;
+	 				ckmodel->kappa_co2_store[i_nu][i_t] = kco2;
+	 			}
+	 			else
+	 			{
+	 				ig = ckmodel->num_gauss[i_nu];
+	 				kh2o = (  ciT1x1 * ckmodel->kstarh[iT][ix][ckmodel->small_to_big[i_nu]][ig]  
+						+ ciT2x1 * ckmodel->kstarh[iT+1][ix][ckmodel->small_to_big[i_nu]][ig]  
+						+ ciT1x2 * ckmodel->kstarh[iT][ix+1][ckmodel->small_to_big[i_nu]][ig]  
+						+ ciT2x2 * ckmodel->kstarh[iT+1][ix+1][ckmodel->small_to_big[i_nu]][ig]);
+	 				ckmodel->kappa_h2o_store[i_nu][i_t][i_xh2o] = kh2o;
+	 				ckmodel->kappa_co2_store[i_nu][i_t] = 0;
+	 			}
+	 		}
+		}
+	}
+}
+
+void compute_index(double t, double h2o, int *i_t_le, int *i_t_kappa, int *i_t_fQ, int *i_h2o)
+{
+	*i_t_le = (int)((t - t_min_kappa_store)/delta_t_le_store + 0.5) +1;
+	*i_t_kappa = (int)( (t-t_min_kappa_store)/delta_t_kappa_store +0.5) + 1;
+	*i_t_fQ = (int)( (t-t_fQ_min_store)/delta_fQ_store + 0.5) + 1;
+	*i_h2o  = (int)( abs(h2o)/delta_xh2o_kappa_store + 0.5);
 }

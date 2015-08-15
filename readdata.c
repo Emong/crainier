@@ -3,7 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "safe_func.h"
+#include "calfunc.h"
+#include <math.h>
 void after_read(t_mesh *);
+void gen_h2o_co2();
 void read_from_vtk(t_mesh *meshdata)
 {
 	FILE *fp;
@@ -31,6 +34,34 @@ void read_from_vtk(t_mesh *meshdata)
 				sscanf(buffer, "%lf%lf%lf", &(meshdata->points[i].x), 
 					&(meshdata->points[i].y),
 					&(meshdata->points[i].z));
+				if(0 == i)
+				{
+					meshdata->max_x = meshdata->points[i].x;
+					meshdata->max_y = meshdata->points[i].y;
+					meshdata->max_z = meshdata->points[i].z;
+
+					meshdata->min_x = meshdata->points[i].x;
+					meshdata->min_y = meshdata->points[i].y;
+					meshdata->min_z = meshdata->points[i].z;	
+				}
+				else
+				{
+					if(meshdata->points[i].x > meshdata->max_x)
+						meshdata->max_x = meshdata->points[i].x;
+					if(meshdata->points[i].y > meshdata->max_y)
+						meshdata->max_y = meshdata->points[i].y;
+					if(meshdata->points[i].z > meshdata->max_z)
+						meshdata->max_z = meshdata->points[i].z;
+
+					if(meshdata->points[i].x < meshdata->min_x)
+						meshdata->min_x = meshdata->points[i].x;
+					if(meshdata->points[i].y < meshdata->min_y)
+						meshdata->min_y = meshdata->points[i].y;
+					if(meshdata->points[i].z < meshdata->min_z)
+						meshdata->min_z = meshdata->points[i].z;
+				}
+				meshdata->points[i].to_cell = -1;
+				meshdata->points[i].to_face = -1;
 #ifdef DEBUG
 				 printf("%lf %lf %lf\n",meshdata->points[i].x,
 				 	meshdata->points[i].y,
@@ -57,6 +88,7 @@ void read_from_vtk(t_mesh *meshdata)
 				if(3 == type)
 				{
 					meshdata->nb_faces++;
+					cells[nb_type_3_4].type = type;
 					sscanf(buffer, "%*u%u%u%u", &(cells[nb_type_3_4].p1),
 						&(cells[nb_type_3_4].p2),
 						&(cells[nb_type_3_4].p3));
@@ -66,6 +98,7 @@ void read_from_vtk(t_mesh *meshdata)
 				else if(4 == type)
 				{
 					meshdata->nb_cells++;
+					cells[nb_type_3_4].type = type;
 					sscanf(buffer, "%*u%u%u%u%u", &cells[nb_type_3_4].p1,
 						&(cells[nb_type_3_4].p2),
 						&(cells[nb_type_3_4].p3),
@@ -91,6 +124,10 @@ void read_from_vtk(t_mesh *meshdata)
 		meshdata->points[cells[i].p1].is_boundary = 1;
 		meshdata->points[cells[i].p2].is_boundary = 1;
 		meshdata->points[cells[i].p3].is_boundary = 1;
+
+		meshdata->points[cells[i].p1].to_face = i;
+		meshdata->points[cells[i].p2].to_face = i;
+		meshdata->points[cells[i].p3].to_face = i;
 #ifdef DEBUG
 		printf("%u %u %u\n",meshdata->faces[i].p1, meshdata->faces[i].p2,meshdata->faces[i].p3);
 #endif
@@ -98,11 +135,16 @@ void read_from_vtk(t_mesh *meshdata)
 	for(i=0; i < meshdata->nb_cells; i++)
 	{
 		meshdata->cells[i] = cells[i+meshdata->nb_faces];
+		meshdata->points[meshdata->cells[i].p1].to_cell = i;
+		meshdata->points[meshdata->cells[i].p2].to_cell = i;
+		meshdata->points[meshdata->cells[i].p3].to_cell = i;
+		meshdata->points[meshdata->cells[i].p4].to_cell = i;
 #ifdef DEBUG					
-		printf("%u %u %u %u\n",meshdata->cells[i].p1,meshdata->cells[i].p2,meshdata->cells[i].p3, meshdata->cells[i].p4);
+		printf("%u %u %u %u %u\n",meshdata->cells[i].type,meshdata->cells[i].p1,meshdata->cells[i].p2,meshdata->cells[i].p3, meshdata->cells[i].p4);
 #endif	
 	}
 	safe_free(cells);
+	gen_h2o_co2();
 	after_read(meshdata);
 }
 
@@ -142,6 +184,14 @@ void write_vtk(t_mesh *mesh, const char filename[])
 	{
 		fprintf(fp, "%d\n",10);
 	}
+	fprintf(fp,"POINT_DATA %u\n",mesh->nb_points);
+	fprintf(fp,"SCALARS temperature float\n");
+	fprintf(fp, "LOOKUP_TABLE default\n");
+	for(i=0;i < mesh->nb_points;i++)
+	{
+		fprintf(fp, "%.16f\n",mesh->points[i].temperature);
+	}
+	fprintf(fp,"\n");
 
 	fclose(fp);
 }
@@ -149,15 +199,43 @@ void write_vtk(t_mesh *mesh, const char filename[])
 void after_read(t_mesh *mesh)
 {
 	int i;
+	mesh->point_to_compute = (unsigned int *)safe_malloc(sizeof(unsigned int) * mesh->nb_points);
 	for(i=0;i<mesh->nb_points;i++)
 	{
-		if(mesh->points[i].is_boundary)
+		if(!mesh->points[i].is_boundary)
+		{
+			if(mesh->points[i].h2o < 1e-3 || mesh->points[i].co2 < 1e-3 )
+				continue;
+		}
+		else
+		{
 			mesh->nb_boundary_points++;
+			mesh->nb_bouudary_point_to_compute++;
+		}
+		mesh->nb_point_to_compute++;
+		mesh->point_to_compute[mesh->nb_point_to_compute] = i;
+	}
+	mesh->max_length = sqrt(pow(mesh->max_x-mesh->min_x,2) +
+		pow(mesh->max_y-mesh->min_y,2) +
+		pow(mesh->max_z-mesh->min_z,2));
+}
+void gen_h2o_co2()
+{
+	t_mesh *mesh = get_mesh();
+	if(mesh->func_hooks.set_h2o_co2_hook != NULL)
+		return mesh->func_hooks.set_h2o_co2_hook();
+	unsigned int i;
+	for(i=0;i<mesh->nb_points;i++)
+	{
+		mesh->points[i].h2o = 0.5;
+		mesh->points[i].co2 = 0.5;
+		mesh->points[i].temperature = 300;
 	}
 }
 void destroy_mesh(t_mesh *mesh)
 {
-		safe_free(mesh->points);
-		safe_free(mesh->faces);
-		safe_free(mesh->cells);
+	safe_free(mesh->points);
+	safe_free(mesh->point_to_compute);
+	safe_free(mesh->faces);
+	safe_free(mesh->cells);
 }
