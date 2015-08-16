@@ -200,17 +200,19 @@ void after_read(t_mesh *mesh)
 {
 	int i;
 	mesh->point_to_compute = (unsigned int *)safe_malloc(sizeof(unsigned int) * mesh->nb_points);
+	mesh->boundary_point_to_compute = (unsigned int *)safe_malloc(sizeof(unsigned int) * mesh->nb_points);
 	for(i=0;i<mesh->nb_points;i++)
 	{
 		if(!mesh->points[i].is_boundary)
 		{
 			if(mesh->points[i].h2o < 1e-3 || mesh->points[i].co2 < 1e-3 )
 				continue;
+			mesh->boundary_point_to_compute[i] = i;
 		}
 		else
 		{
 			mesh->nb_boundary_points++;
-			mesh->nb_bouudary_point_to_compute++;
+			mesh->nb_boundary_point_to_compute++;
 		}
 		mesh->nb_point_to_compute++;
 		mesh->point_to_compute[mesh->nb_point_to_compute] = i;
@@ -236,6 +238,7 @@ void destroy_mesh(t_mesh *mesh)
 {
 	safe_free(mesh->points);
 	safe_free(mesh->point_to_compute);
+	safe_free(mesh->boundary_point_to_compute);
 	safe_free(mesh->faces);
 	safe_free(mesh->cells);
 }

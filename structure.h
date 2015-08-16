@@ -71,7 +71,7 @@ typedef struct _t_point
 	char is_boundary;
 	char compute_able;
 	double x,y,z;
-	double temperature, co2, h2o, emission;
+	double temperature, co2, h2o, emission,emission_surface;
 	int to_cell;
 	int to_face;
 }t_point;
@@ -100,14 +100,20 @@ typedef struct _t_mesh
 {
 	t_point *points;
 	unsigned int *point_to_compute;
+	unsigned int *boundary_point_to_compute;
 	t_face *faces;
 	t_cell *cells;
 	t_ck_model ckmodel;
+	double point_presure;
+	double face_presure;
+	double face_point_presure;
+	double max_emission;
+	double epsilon_paro;
 	t_func_hook func_hooks;
 	unsigned int nb_points,nb_faces,nb_cells;
 	unsigned int nb_boundary_points;
 	unsigned int nb_point_to_compute;
-	unsigned int nb_bouudary_point_to_compute;
+	unsigned int nb_boundary_point_to_compute;
 	double max_x,max_y,max_z;
 	double min_x,min_y,min_z;
 	double max_length;

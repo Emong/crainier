@@ -4,4 +4,7 @@
 t_mesh *get_mesh();
 void debug(const char * format,...);
 void local_coordinate_vector_diffusion(double *u_second_1, double *u_second_2, double *u_second_3);
+void compute_point_emission();
+void compute_point_emission_surface();
+void determine_direction(double *v_x, double *v_y, double *v_z);
 #endif

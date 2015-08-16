@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
+#include "nrand.h"
 
 void generation_spectrum_parameter();
 void store_kappa_le();
@@ -307,4 +308,52 @@ void compute_index(double t, double h2o, int *i_t_le, int *i_t_kappa, int *i_t_f
 	*i_t_kappa = (int)( (t-t_min_kappa_store)/delta_t_kappa_store +0.5) + 1;
 	*i_t_fQ = (int)( (t-t_fQ_min_store)/delta_fQ_store + 0.5) + 1;
 	*i_h2o  = (int)( abs(h2o)/delta_xh2o_kappa_store + 0.5);
+}
+
+int get_nu(int point)
+{
+	t_mesh *mesh = get_mesh();
+	int i_t_le, i_t_kappa, i_t_fQ, i_h2o, nu;
+	unsigned int i_nu;
+	double cumulative_energy, cumulative_energy_old, kappa, rand_number;
+	rand_number = nrand() * mesh->points[point].emission / FOUR_PI /mesh->point_presure;
+	cumulative_energy = 0;
+	nu = 0;
+	for(i_nu=0;i_nu<NB_BAND;i_nu++)
+	{
+		compute_index(mesh->points[point].temperature, mesh->points[point].h2o, &i_t_le, &i_t_kappa, &i_t_fQ, &i_h2o);
+		cumulative_energy_old = cumulative_energy;
+		kappa = mesh->points[point].h2o * mesh->ckmodel.fQH_store[i_t_fQ] * mesh->ckmodel.kappa_h2o_store[i_nu][i_t_kappa][i_h2o] +  
+			mesh->points[point].co2 * mesh->ckmodel.fQC_store[i_t_fQ] * mesh->ckmodel.kappa_co2_store[i_nu][i_t_kappa];
+		cumulative_energy = cumulative_energy + kappa * mesh->ckmodel.le_store[i_nu][i_t_le];
+		if(rand_number <= cumulative_energy && rand_number > cumulative_energy_old)
+		{
+			nu = i_nu;
+			break;
+		}
+	}
+	return nu;
+}
+
+int get_nu_face(int point)
+{
+	t_mesh *mesh = get_mesh();
+	int i_t_le, i_t_kappa, i_t_fQ, i_h2o, nu;
+	unsigned int i_nu;
+	double cumulative_energy, cumulative_energy_old, rand_number;
+	rand_number = nrand() * mesh->points[point].emission_surface / FOUR_PI / mesh->point_presure;
+	cumulative_energy = 0;
+	nu = 0;
+	for(i_nu=0;i_nu<NB_BAND;i_nu++)
+	{
+		compute_index(mesh->points[point].temperature, mesh->points[point].h2o, &i_t_le, &i_t_kappa, &i_t_fQ, &i_h2o);
+		cumulative_energy_old = cumulative_energy;
+		cumulative_energy = cumulative_energy + mesh->epsilon_paro * mesh->ckmodel.le_store[i_nu][i_t_le];
+		if(rand_number <= cumulative_energy && rand_number > cumulative_energy_old)
+		{
+			nu = i_nu;
+			break;
+		}
+	}
+	return nu;
 }
