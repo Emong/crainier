@@ -223,7 +223,7 @@ void after_read(t_mesh *mesh)
 		pow(mesh->max_y-mesh->min_y,2) +
 		pow(mesh->max_z-mesh->min_z,2));
 	printf("begin split!\n");
-	split_cells_to_faces();
+	//split_cells_to_faces();
 	printf("end split!\n");
 }
 void gen_h2o_co2()

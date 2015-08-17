@@ -14,9 +14,9 @@ void cell_loop(int point_begin, int point_end)
 	int face_impact, face_impact_old;
 	double transmission, absorption;
 	double energy_per_realisation;
-	double t_inlet, co2_inlet, h2o_inlet, t_outlet, co2_outlet, h2o_outlet, t_oli, temperature, co2, h2o, temperature_wall;
+	double t_inlet, co2_inlet, h2o_inlet, t_outlet, co2_outlet, h2o_outlet, temperature, co2, h2o, temperature_wall;
 	double v_x,v_y,v_z;
-	double distance, kappa, le, le_at_point, kappa_wall, le_wall, epsilon;
+	double distance, kappa, le, le_at_point, le_wall, epsilon;
 	t_vector point_in, point_out,dir;
 	int first,ierr;
 	int point_to_check = -25201;
@@ -37,8 +37,6 @@ void cell_loop(int point_begin, int point_end)
 				break;
 			tir = 0;
 			double energy_inter[NB_BAND] = {0};
-			// tir = 0
-   //  		energy_inter(:) = 0.d0
 			while(1)
 			{
 				energy_per_realisation = 0;
@@ -68,12 +66,6 @@ void cell_loop(int point_begin, int point_end)
 					compute_dir(face, &v_x, &v_y, &v_z, &epsilon, first);
 					first = 0;
 				}
-				// 0.99D0 * xyz(:, point) &
-				// 	+ 0.01D0/4.0D0 * xyz(:,cell_to_points(1,cell)) &
-				// 	+ 0.01D0/4.0D0 * xyz(:,cell_to_points(2,cell)) &
-				// 	+ 0.01D0/4.0D0 * xyz(:,cell_to_points(3,cell)) &
-				// 	+ 0.01D0/4.0D0 * xyz(:,cell_to_points(4,cell))
-
 				point_in.x = 0.99 * mesh->points[point_id].x + 0.01 / 4 * mesh->points[mesh->cells[cell].p1].x +
 					0.01 / 4 * mesh->points[mesh->cells[cell].p2].x +
 					0.01 / 4 * mesh->points[mesh->cells[cell].p3].x +
@@ -143,7 +135,6 @@ void cell_loop(int point_begin, int point_end)
 					face_impact_old = face_impact;
 				}
 			}
-
 		}
 	}
 }

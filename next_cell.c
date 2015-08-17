@@ -1,34 +1,6 @@
 #include "next_cell.h"
 #include <math.h>
 
-// SUBROUTINE find_next_cell(cell, face_inlet, inlet, dir, next_cell, next_face, outlet, length, t_outlet, co2_outlet, h2o_outlet,&
-//     ierr) 
-// ! 
-// USE geometrie, ONLY : xyz, cell_to_faces, cell_to_points &
-// 					, face_to_points, face_to_cells, face_merged &
-//                     , maximum_length, cell_volume &
-//                     , face_patch_type, face_periodic_connection &
-//                     , num_patch_periodic_1, num_patch_periodic_2 &
-//                     , angle_patch_periodic_1, angle_patch_periodic_2 &
-//                     , nb_faces
-// USE  physical_values, ONLY : point_temperature, point_xco2, point_xh2o
-// USE control_parameters, ONLY : distance_impact_min
-// !
-
-// INTEGER, INTENT(INOUT)  :: cell, face_inlet
-// INTEGER, INTENT(OUT) :: next_cell, next_face, ierr
-// DOUBLE PRECISION, INTENT(OUT)   :: length
-// DOUBLE PRECISION, INTENT(OUT)   :: t_outlet, co2_outlet, h2o_outlet
-// DOUBLE PRECISION, INTENT(INOUT),    DIMENSION(3) :: inlet
-// DOUBLE PRECISION, INTENT(OUT),   DIMENSION(3) :: outlet
-// DOUBLE PRECISION, INTENT(INOUT), DIMENSION(3) :: dir
-// !
-// INTEGER :: code, ioerror
-// DOUBLE PRECISION, DIMENSION(3) :: a,b,c,d,f, inlet_first, new_dir, tempo1, tempo2
-// DOUBLE PRECISION :: det, pa, pb, pc, pd, sum_p, norma, normb
-// LOGICAL :: ok, merged
-// !
-// INTEGER :: n_face, face
 inline double p_cal(t_vector a, t_vector b, t_vector c)
 {
 	return ( a.z * ( b.x*c.y - c.x*b.y ) 

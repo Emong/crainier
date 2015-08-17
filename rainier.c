@@ -12,8 +12,8 @@ void set_co2_h2o()
 	unsigned int i;
 	for(i=0;i<mesh->nb_points;i++)
 	{
-		mesh->points[i].h2o = 0.0001;
-		mesh->points[i].co2 = 0.0001;
+		mesh->points[i].h2o = 0.1;
+		mesh->points[i].co2 = 0.1;
 		if(mesh->points[i].z < mesh->max_z/2)
 			mesh->points[i].temperature = 300;
 		else 
