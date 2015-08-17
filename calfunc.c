@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "calfunc.h"
 #include <math.h>
+#include <stdlib.h>
 #include "nrand.h"
 #include "structure.h"
 #include "ck_model.h"
@@ -50,6 +51,7 @@ void determine_direction(double *v_x, double *v_y, double *v_z)
 	*v_x = sin_theta * cos(phi);
 	*v_y = sin_theta * sin(phi);
 	*v_z = cos_theta;
+	//printf("vx:%f\n",*v_x);
 }
 
 void compute_point_emission()
@@ -88,4 +90,87 @@ void compute_point_emission_surface()
 		point_id = mesh->boundary_point_to_compute[i];
 		mesh->points[point_id].emission_surface = mesh->epsilon_paro * constant_stefan * pow(mesh->points[point_id].temperature,4);
 	}
+}
+
+void compute_dir(int face, double *dir_x, double *dir_y, double *dir_z, double *epsilon, int first)
+{
+	t_mesh *mesh = get_mesh();
+	double u_second_1, u_second_2, u_second_3;
+	double n_x_1 , n_y_1 , n_z_1;
+	double n_x_2 , n_y_2 , n_z_2;
+	double norm1, norm2;
+	double M_1_x, M_1_y, M_1_z;
+	double scalaire2;
+	double cos_theta, theta;
+	double dx,dy,dz;
+	int speculaire,cell;
+	int table_theta[181];
+	cell = mesh->faces[face].to_cell[0];
+	dx = *dir_x;
+	dy = *dir_y;
+	dz = *dir_z;
+	speculaire = 1;
+	if(speculaire && !first)
+	{
+		//cos_theta = abs(dir_x * normal_face_x(face) + dir_y * normal_face_y(face) + dir_z * normal_face_z(face))
+		cos_theta = fabs(dx * mesh->faces[face].normal_vector_x + dy * mesh->faces[face].normal_vector_y + dz * mesh->faces[face].normal_vector_z);
+		*dir_x = dx + 2 * cos_theta * mesh->faces[face].normal_vector_x;
+		*dir_y = dy + 2 * cos_theta * mesh->faces[face].normal_vector_y;
+		*dir_z = dz + 2 * cos_theta * mesh->faces[face].normal_vector_z;
+
+		*epsilon = *epsilon * 1.5 * cos_theta;
+
+		cos_theta = min(1.0,fabs(cos_theta));
+
+		theta = acos(cos_theta) * 45 + atan(1.0);
+		if(theta > 90)
+		{
+			fprintf(stderr, "in compute_dir theta :%f\n bigger than 90",theta);
+			exit(1);
+		}
+		// table_theta(INT(acos(cos_theta) * 180.0d0 / 3.14159d0 +1)) = table_theta(INT(acos(cos_theta) * 180.0d0 / 3.14159d0 +1)) + 1
+		table_theta[(int)(acos(cos_theta) * 180.0 / PI)] = table_theta[(int)(acos(cos_theta) * 180.0 / PI)];
+	}
+	else
+	{
+		M_1_x  = mesh->faces[face].normal_vector_x + 1;
+		M_1_y  = mesh->faces[face].normal_vector_y;
+		M_1_z  = mesh->faces[face].normal_vector_z;
+		scalaire2 = mesh->faces[face].normal_vector_x * M_1_x + mesh->faces[face].normal_vector_y  * M_1_y  + mesh->faces[face].normal_vector_z  * M_1_z;
+		if(0 == mesh->faces[face].normal_vector_y && 0 == mesh->faces[face].normal_vector_z)
+		{
+			n_x_1 = 0;
+			n_y_1 = 1;
+			n_z_1 = 0;
+
+			n_x_2 = 0;
+			n_y_2 = 0;
+			n_z_2 = mesh->faces[face].normal_vector_x;
+		}
+		else
+		{
+			n_x_1 = M_1_x - scalaire2 * mesh->faces[face].normal_vector_x;
+			n_y_1 = M_1_y - scalaire2 * mesh->faces[face].normal_vector_y;
+			n_z_1 = M_1_z - scalaire2 * mesh->faces[face].normal_vector_z;
+
+			norm1 = sqrt(n_x_1*n_x_1 + n_y_1*n_y_1 + n_z_1*n_z_1);
+			n_x_1 /= norm1;
+			n_y_1 /= norm1;
+			n_z_1 /= norm1;
+
+			n_x_2 = mesh->faces[face].normal_vector_y*n_z_1 - mesh->faces[face].normal_vector_z*n_y_1;
+			n_y_2 = mesh->faces[face].normal_vector_z*n_x_1 - mesh->faces[face].normal_vector_x*n_z_1;
+			n_z_2 = mesh->faces[face].normal_vector_x*n_y_1 - mesh->faces[face].normal_vector_y*n_x_1;
+
+			norm2 = sqrt(n_x_2*n_x_2 + n_y_2*n_y_2 + n_z_2*n_z_2);
+			n_x_2 /= norm2;
+			n_y_2 /= norm2;
+			n_z_2 /= norm2;
+		}
+		local_coordinate_vector_diffusion(&u_second_1, &u_second_2, &u_second_3);
+		*dir_x = u_second_1 * n_x_1 + u_second_2 * n_x_2 + u_second_3 * mesh->faces[face].normal_vector_x; 
+		*dir_y = u_second_1 * n_y_1 + u_second_2 * n_y_2 + u_second_3 * mesh->faces[face].normal_vector_y;
+		*dir_z = u_second_1 * n_z_1 + u_second_2 * n_z_2 + u_second_3 * mesh->faces[face].normal_vector_z;
+	}
+
 }

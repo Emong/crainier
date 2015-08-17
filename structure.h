@@ -75,6 +75,10 @@ typedef struct _t_point
 	int to_cell;
 	int to_face;
 }t_point;
+typedef struct _t_vector
+{
+	double x,y,z;
+}t_vector;
 
 typedef struct _t_face
 {
@@ -82,6 +86,7 @@ typedef struct _t_face
 	double normal_vector_x;
 	double normal_vector_y;
 	double normal_vector_z;
+	int to_cell[2];
 }t_face;
 
 typedef struct _t_cell
@@ -89,6 +94,7 @@ typedef struct _t_cell
 //	unsigned int type;
 	enum cell_type type;
 	unsigned int p1,p2,p3,p4;
+	double temperature;
 }t_cell;
 
 typedef struct _t_function_hook
@@ -104,6 +110,8 @@ typedef struct _t_mesh
 	t_face *faces;
 	t_cell *cells;
 	t_ck_model ckmodel;
+	int (*face_to_cells)[2];
+	int (*cell_to_faces)[4];
 	double point_presure;
 	double face_presure;
 	double face_point_presure;
@@ -117,5 +125,7 @@ typedef struct _t_mesh
 	double max_x,max_y,max_z;
 	double min_x,min_y,min_z;
 	double max_length;
+	double distance_impact_min;
+	double transmission_stop;
 }t_mesh;
 #endif

@@ -304,9 +304,9 @@ void store_kappa_le()
 
 void compute_index(double t, double h2o, int *i_t_le, int *i_t_kappa, int *i_t_fQ, int *i_h2o)
 {
-	*i_t_le = (int)((t - t_min_kappa_store)/delta_t_le_store + 0.5) +1;
-	*i_t_kappa = (int)( (t-t_min_kappa_store)/delta_t_kappa_store +0.5) + 1;
-	*i_t_fQ = (int)( (t-t_fQ_min_store)/delta_fQ_store + 0.5) + 1;
+	*i_t_le = (int)((t - t_min_kappa_store)/delta_t_le_store + 0.5);
+	*i_t_kappa = (int)( (t-t_min_kappa_store)/delta_t_kappa_store +0.5);
+	*i_t_fQ = (int)( (t-t_fQ_min_store)/delta_fQ_store + 0.5);
 	*i_h2o  = (int)( abs(h2o)/delta_xh2o_kappa_store + 0.5);
 }
 
@@ -356,4 +356,18 @@ int get_nu_face(int point)
 		}
 	}
 	return nu;
+}
+
+void compute_kappa_le_simple(int nu, double temperature, double co2, double h2o, double *kappa, double *le)
+{
+	t_mesh *mesh = get_mesh();
+	int i_t_le, i_t_kappa, i_t_fQ, i_h2o;
+	double t, x_h2o, x_co2;
+	t = temperature;
+	x_h2o = h2o;
+	x_co2 = co2;
+	compute_index(t, x_h2o, &i_t_le, &i_t_kappa, &i_t_fQ, &i_h2o);
+	*kappa = mesh->point_presure * x_h2o * mesh->ckmodel.fQH_store[i_t_fQ] * mesh->ckmodel.kappa_h2o_store[nu][i_t_kappa][i_h2o] + 
+		mesh->point_presure * x_co2 *mesh->ckmodel.fQC_store[i_t_fQ] * mesh->ckmodel.kappa_co2_store[nu][i_t_kappa];
+	*le = mesh->ckmodel.le_store[nu][i_t_le];
 }

@@ -7,4 +7,5 @@ double fQH(double T);
 void compute_index(double t, double h2o, int *i_t_le, int *i_t_kappa, int *i_t_fQ, int *i_h2o);
 int get_nu(int point);
 int get_nu_face(int point);
+void compute_kappa_le_simple(int nu, double temperature, double co2, double h2o, double *kappa, double *le);
 #endif

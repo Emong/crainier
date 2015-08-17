@@ -7,7 +7,9 @@
 #include <math.h>
 void after_read(t_mesh *);
 void gen_h2o_co2();
+void split_cells_to_faces();
 void read_from_vtk(t_mesh *meshdata)
+
 {
 	FILE *fp;
 	unsigned int i;
@@ -220,6 +222,9 @@ void after_read(t_mesh *mesh)
 	mesh->max_length = sqrt(pow(mesh->max_x-mesh->min_x,2) +
 		pow(mesh->max_y-mesh->min_y,2) +
 		pow(mesh->max_z-mesh->min_z,2));
+	printf("begin split!\n");
+	split_cells_to_faces();
+	printf("end split!\n");
 }
 void gen_h2o_co2()
 {
@@ -241,4 +246,66 @@ void destroy_mesh(t_mesh *mesh)
 	safe_free(mesh->boundary_point_to_compute);
 	safe_free(mesh->faces);
 	safe_free(mesh->cells);
+}
+inline void swap(int *x,int*y)
+{
+	int temp;
+	temp = *x;
+	*x = *y;
+	*y = temp;
+}
+void make_lite_to_big(int *x,int *y,int *z)
+{
+	if(*x > *y)
+		swap(x,y);
+	if(*x > *z)
+		swap(x,z);
+	if(*y > *z)
+		swap(y,z);
+}
+void split_cells_to_faces()
+{
+	t_mesh *mesh = get_mesh();
+	t_face *faces = safe_malloc(sizeof(t_face) * 4*mesh->nb_cells);
+	char *x = safe_malloc(mesh->nb_points);
+	char *y = safe_malloc(mesh->nb_points);
+	char *z = safe_malloc(mesh->nb_points);
+	int c_p1,c_p2,c_p3;
+	int flag;
+	memset(x,0,mesh->nb_points);
+	memset(x,0,mesh->nb_points);
+	memset(x,0,mesh->nb_points);
+	int i,j,nb_domain_faces;
+	nb_domain_faces = 0;
+	for(i=0;i<mesh->nb_cells;i++)
+	{
+		if(i%10000 == 0)
+			printf("%d\n",i);
+		c_p1 = mesh->cells[i].p1;
+		c_p2 = mesh->cells[i].p2;
+		c_p3= mesh->cells[i].p3;
+		make_lite_to_big(&c_p1, &c_p2, &c_p3);
+		flag = 0;
+		for(j=0;j<nb_domain_faces;j++)
+		{
+			if(faces[j].p1 == c_p1 && faces[j].p2 == c_p2 && faces[j].p3 == c_p3)
+			{
+				faces[j].to_cell[1] = i;
+				flag  = 1;
+				break;
+			}
+		}
+		if(flag == 0)
+		{
+			faces[nb_domain_faces].p1 = c_p1;
+			faces[nb_domain_faces].p2 = c_p2;
+			faces[nb_domain_faces].p3 = c_p3;
+			faces[nb_domain_faces].to_cell[0] = i;
+			nb_domain_faces++;
+		}
+	}
+	printf("nb_domain_faces:%d\n",nb_domain_faces);
+	safe_free(x);
+	safe_free(y);
+	safe_free(z);
 }

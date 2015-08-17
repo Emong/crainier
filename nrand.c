@@ -1,6 +1,6 @@
 #include "nrand.h"
 #include <stdlib.h>
-double nrand()
+inline double nrand()
 {
-	return rand();
+	return (rand()%10000) / 20000.0;
 }

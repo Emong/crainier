@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "calfunc.h"
 #include "ck_model.h"
+#include "cell_loop.h"
 
 void set_co2_h2o()
 {
@@ -23,6 +24,11 @@ void set_co2_h2o()
 void init()
 {
 	get_mesh()->func_hooks.set_h2o_co2_hook = set_co2_h2o;
+	get_mesh()->epsilon_paro = 0.8;
+	get_mesh()->point_presure = 1e5;
+	get_mesh()->distance_impact_min = 1e-5;
+	get_mesh()->ckmodel.epsilon = 0.8;
+	get_mesh()->transmission_stop = 1e-3;
 	// get_mesh()->nb_points = 0;
 	// get_mesh()->nb_faces = 0;
 	// get_mesh()->nb_cells = 0;
@@ -56,6 +62,7 @@ int main(int argc, char const *argv[])
 	printf("ck_model:%.16g\n",get_mesh()->ckmodel.kstarh[0][0][0][0]);
 	printf("cell type:%d\n",get_mesh()->cells[0].type);
 	printf("points 0 to cells:%d\n",get_mesh()->points[0].to_face);
+	//cell_loop(0,200);
 	write_vtk(get_mesh(), "./out.vtk");
 	destroy_mesh(get_mesh());
 	// double x=1.123456789;
