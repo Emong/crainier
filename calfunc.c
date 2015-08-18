@@ -61,6 +61,7 @@ void compute_point_emission()
 	int i_t_le,i_t_kappa,i_t_fQ,i_h2o;
 	double kappa,emission=0;
 	mesh->max_emission = 0;
+
 	for(i=0;i<mesh->nb_points;i++)
 	{
 		mesh->points[i].emission = 0;
@@ -71,8 +72,8 @@ void compute_point_emission()
 		compute_index(mesh->points[point_id].temperature, mesh->points[point_id].h2o, &i_t_le, &i_t_kappa, &i_t_fQ, &i_h2o);
 		for(j=0;j<NB_BAND;j++)
 		{
-			kappa = mesh->point_presure * mesh->points[i].h2o * mesh->ckmodel.fQH_store[i] * mesh->ckmodel.kappa_h2o_store[j][i_t_kappa][i_h2o] + 
-				mesh->point_presure * mesh->points[i].co2 * mesh->ckmodel.fQC_store[i] * mesh->ckmodel.kappa_co2_store[j][i_t_kappa];
+			kappa = mesh->point_presure * mesh->points[i].h2o * mesh->ckmodel.fQH_store[i_t_fQ] * mesh->ckmodel.kappa_h2o_store[j][i_t_kappa][i_h2o] + 
+				mesh->point_presure * mesh->points[i].co2 * mesh->ckmodel.fQC_store[i_t_fQ] * mesh->ckmodel.kappa_co2_store[j][i_t_kappa];
 			emission = emission + kappa*mesh->ckmodel.le_store[j][i_t_le];
 		}
 		mesh->points[i].emission = FOUR_PI * emission;

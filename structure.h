@@ -87,6 +87,7 @@ typedef struct _t_face
 	double normal_vector_y;
 	double normal_vector_z;
 	int to_cell[2];
+	int is_boundary;
 }t_face;
 
 typedef struct _t_cell
@@ -95,6 +96,7 @@ typedef struct _t_cell
 	enum cell_type type;
 	unsigned int p1,p2,p3,p4;
 	double temperature;
+	int to_faces[4];
 }t_cell;
 
 typedef struct _t_function_hook

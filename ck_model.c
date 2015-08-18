@@ -307,7 +307,7 @@ void compute_index(double t, double h2o, int *i_t_le, int *i_t_kappa, int *i_t_f
 	*i_t_le = (int)((t - t_min_kappa_store)/delta_t_le_store + 0.5);
 	*i_t_kappa = (int)( (t-t_min_kappa_store)/delta_t_kappa_store +0.5);
 	*i_t_fQ = (int)( (t-t_fQ_min_store)/delta_fQ_store + 0.5);
-	*i_h2o  = (int)( abs(h2o)/delta_xh2o_kappa_store + 0.5);
+	*i_h2o  = (int)( fabs(h2o)/delta_xh2o_kappa_store + 0.5);
 }
 
 int get_nu(int point)

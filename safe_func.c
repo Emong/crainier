@@ -11,9 +11,10 @@ void *safe_malloc(size_t __size)
 	perror("malloc:");
 	exit(1);
 }
-void safe_free(void *__ptr)
+void *safe_free(void *__ptr)
 {
 
 	if(NULL != __ptr)
 		free(__ptr);
+	return NULL;
 }

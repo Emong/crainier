@@ -31,9 +31,9 @@ void cell_loop(int point_begin, int point_end)
 			nb_simul = 2;
 		for(simul = 0; simul < nb_simul;simul++)
 		{
-			if(1 == simul && mesh->points[point_id].emission < 0.5)
+			if(0 == simul && mesh->points[point_id].emission < 0.5)
 				break;
-			if(2 == simul && mesh->points[point_id].emission_surface < 0.5)
+			if(1 == simul && mesh->points[point_id].emission_surface < 0.5)
 				break;
 			tir = 0;
 			double energy_inter[NB_BAND] = {0};

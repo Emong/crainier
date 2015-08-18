@@ -28,7 +28,7 @@ void find_next_cell(int *cell, int *face_inlet, t_vector *inlet, t_vector *dir,
 		f.z = inlet->z + mesh->max_length /10 * dir->z;
 		for(i_face = 0;i_face<4;i_face++)
 		{
-			face = mesh->cell_to_faces[*cell][i_face];
+			face = mesh->cells[*cell].to_faces[i_face];
 			if(face == *face_inlet) 
 				continue;
 			a.x = f.x - mesh->points[mesh->faces[face].p1].x;
@@ -106,7 +106,7 @@ void find_next_cell(int *cell, int *face_inlet, t_vector *inlet, t_vector *dir,
 		*face_inlet = *next_face;
 		merged = 0;
 	} // end while
-	*t_outlet = sum_p * ( pa * mesh->points[mesh->faces[*next_face].p1].temperature +  pb * mesh->points[mesh->faces[*next_face].p2].temperature + pc * mesh->points[mesh->faces[*next_face].p3].temperature);
+	*t_outlet = sum_p * ( pa * mesh->points[mesh->faces[*next_face].p1].temperature );//+  pb * mesh->points[mesh->faces[*next_face].p2].temperature + pc * mesh->points[mesh->faces[*next_face].p3].temperature);
 	*co2_outlet = sum_p * ( pa * mesh->points[mesh->faces[*next_face].p1].co2 +  pb * mesh->points[mesh->faces[*next_face].p2].co2 + pc * mesh->points[mesh->faces[*next_face].p3].co2);
 	*h2o_outlet = sum_p * ( pa * mesh->points[mesh->faces[*next_face].p1].h2o +  pb * mesh->points[mesh->faces[*next_face].p2].h2o + pc * mesh->points[mesh->faces[*next_face].p3].h2o);
 	*ierr = 1;
